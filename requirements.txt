@@ -1,0 +1,10 @@
+tensorflow>=2.2,<2.3
+tensorflow_probability<0.11,>=0.10
+gym
+imageio
+PILLOW
+pyglet
+pyvirtualdisplay
+tf-agents[reverb]
+IPython
+matplotlib
