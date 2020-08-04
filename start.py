@@ -23,18 +23,18 @@ from tf_agents.policies.policy_saver import PolicySaver
 tf.compat.v1.enable_v2_behavior()
 
 # initialize variables
-num_iterations = 20000  # @param {type:"integer"}
+num_iterations = 20000
 
-initial_collect_steps = 1000  # @param {type:"integer"}
-collect_steps_per_iteration = 1  # @param {type:"integer"}
-replay_buffer_max_length = 100000  # @param {type:"integer"}
+initial_collect_steps = 1000
+collect_steps_per_iteration = 1
+replay_buffer_max_length = 100000
 
-batch_size = 64  # @param {type:"integer"}
-learning_rate = 1e-3  # @param {type:"number"}
-log_interval = 200  # @param {type:"integer"}
+batch_size = 64
+learning_rate = 1e-5
+log_interval = 200
 
-num_eval_episodes = 10  # @param {type:"integer"}
-eval_interval = 1000  # @param {type:"integer"}
+num_eval_episodes = 10
+eval_interval = 1000
 
 env_name = 'MountainCar-v0'
 env = suite_gym.load(env_name)
@@ -74,10 +74,17 @@ eval_policy = agent.policy
 collect_policy = agent.collect_policy
 
 
+random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(),
+                                                train_env.action_spec())
+example_environment = tf_py_environment.TFPyEnvironment(
+    suite_gym.load(env_name))
+
+time_step = example_environment.reset()
+
+
 def compute_avg_return(environment, policy, num_episodes=10):
     total_return = 0.0
     for _ in range(num_episodes):
-
         time_step = environment.reset()
         episode_return = 0.0
 
@@ -90,6 +97,8 @@ def compute_avg_return(environment, policy, num_episodes=10):
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
 
+
+compute_avg_return(eval_env, random_policy, num_eval_episodes)
 
 replay_buffer = tf_uniform_replay_buffer.TFUniformReplayBuffer(
     data_spec=agent.collect_data_spec,
@@ -112,10 +121,13 @@ def collect_data(env, policy, buffer, steps):
         collect_step(env, policy, buffer)
 
 
+collect_data(train_env, random_policy, replay_buffer, steps=100)
+
+
 dataset = replay_buffer.as_dataset(
     num_parallel_calls=3,
     sample_batch_size=batch_size,
-    num_steps=2).prefetch(3)
+    num_steps=2).prefetch(5)
 
 iterator = iter(dataset)
 
